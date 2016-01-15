@@ -1,9 +1,410 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Land use statistics map</title>
-</head>
-<body>
-  This will be the demonstration of the finished map. It will contain links to the tutorial and the code.
-</body>
+<html lang="en">
+  <head>
+    <title>Land use statistics map</title>
+
+    <!-- CSS library -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Custom CSS styles -->
+    <style type="text/css">
+      body {
+        margin: 25px;
+      }
+
+      #map {
+        border: 1px solid silver;
+        background: #E6E6E6;
+      }
+
+      #content {
+        margin-top: 2rem;
+      }
+
+      g.features {
+        stroke: silver;
+        stroke-width: 0.25;
+      }
+
+      g.features path:hover {
+        opacity: 0.5;
+      }
+
+      #select-key {
+        width: 100%;
+      }
+
+      /** A little hack to make the map fill more space than by default on smaller screens **/
+      @media (min-width: 400px) {
+        .container {
+          width: 100%;
+        }
+      }
+
+      table {
+        margin-bottom: 0;
+      }
+
+      td, th {
+        padding: 6px 9px;
+      }
+
+      td {
+        text-align: right;
+      }
+
+      #close-details {
+        color: #FA5858;
+        text-decoration: none;
+        font-size: 4rem;
+        text-align: right;
+        line-height: 4.5rem;
+      }
+      #close-details:hover {
+        color: red;
+      }
+
+      .footer {
+        border-top: 1px solid silver;
+        color: #888888;
+        font-size: 1.25rem;
+        text-align: center;
+        margin-top: 1rem;
+        padding: 0.5rem;
+      }
+
+      /** http://colorbrewer2.org/ **/
+      .YlGnBu .q0-9{fill:rgb(255,255,217)} .YlGnBu .q1-9{fill:rgb(237,248,177)} .YlGnBu .q2-9{fill:rgb(199,233,180)} .YlGnBu .q3-9{fill:rgb(127,205,187)} .YlGnBu .q4-9{fill:rgb(65,182,196)} .YlGnBu .q5-9{fill:rgb(29,145,192)} .YlGnBu .q6-9{fill:rgb(34,94,168)} .YlGnBu .q7-9{fill:rgb(37,52,148)} .YlGnBu .q8-9{fill:rgb(8,29,88)}
+
+      div.ttip {
+        padding: 0.5em;
+      }
+
+      div.ttip {
+        color: #222;
+        background: #fff;
+        padding: .5em;
+        text-shadow: #f5f5f5 0 1px 0;
+        border-radius: 2px;
+        box-shadow: 0px 0px 2px 0px #a6a6a6;
+        opacity: 0.9;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="nine columns">
+          <h3>Land use statistics map</h3>
+        </div>
+        <div class="three columns">
+          <select id="select-key">
+            <option value="rural">Rural area in %</option>
+            <option value="agriculture" selected="selected">Agricultural area in %</option>
+            <option value="forest">Forest area in %</option>
+            <option value="unproductive">Unproductive area in %</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div id="map" class="twelve column"><!-- Map container --></div>
+      </div>
+      <div id="content">
+        <div id="initial">
+          <div class="row">
+            <div class="six columns">
+              <h5>Instructions</h5>
+              <ul>
+                <li>Change the key using the dropdown above the map.</li>
+                <li>Select a municipality to show the details.</li>
+                <li>Scroll in the map to zoom in and out.</li>
+              </ul>
+            </div>
+            <div class="six columns">
+              <h5>Code</h5>
+              <p>This map was created for the <a href="http://www.webmap.unibe.ch/" target="_blank">webmap workshop</a> being held on January 20-21 2016 at the University of Bern.</p>
+              <p>Check out the <a href="#" target="_blank">tutorial</a> or have a look at the <a href="#" target="_blank">code</a>.</p>
+            </div>
+          </div>
+        </div>
+        <div id="details" class="hidden"></div>
+      </div>
+      <div class="footer">
+        <strong>Data sources</strong>: Data from the Swiss Federal Statistical Office, both the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/dienstleistungen/geostat/datenbeschreibung/generalisierte_gemeindegrenzen.html" target="_blank">geographical data</a> and the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/regionen/02/daten.html" target="_blank">statistical data</a>.
+      </div>
+    </div>
+  </body>
+
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
+
+  <script id="template" type="x-tmpl-mustache">
+    <div class="row">
+      <h3 class="six columns">{{ name }}</h3>
+      <table class="five columns">
+        <tr>
+          <th>Total area:</th>
+          <td>{{ total_area }} km&sup2;</td>
+        </tr>
+        <tr>
+          <th>Rural area:</th>
+          <td>{{ rural }}%</td>
+        </tr>
+        <tr>
+          <th>Agricultural area:</th>
+          <td>{{ agriculture }} %</td>
+        </tr>
+        <tr>
+          <th>Forest area:</th>
+          <td>{{ forest }} %</td>
+        </tr>
+        <tr>
+          <th>Unproductive area:</th>
+          <td>{{ unproductive }} %</td>
+        </tr>
+      </table>
+      <a href="#" id="close-details" class="one column" onclick="return closeDetails();">&#x274c;</a>
+    </div>
+  </script>
+
+  <script type="text/javascript">
+
+    var mapContainer = d3.select('#map');
+    var width = 900;
+    var height = 600;
+
+    var data_global;
+    var currentKey = 'agriculture';
+
+    d3.select('#select-key').on('change', function(a) {
+      currentKey = d3.select(this).property('value');
+      updateColor();
+    });
+
+    // We create an SVG element in the map container and give it some
+    // dimensions.
+    var svg = d3.select('#map').append('svg').attr("preserveAspectRatio", "xMidYMid")
+      .attr("viewBox", "0 0 " + width + " " + height);
+      // .attr('width', width)
+      // .attr('height', height);
+
+    // We add a <g> element to the SVG element and give it a class to
+        // style it later.
+    var mapFeatures = svg.append('g')
+            .attr('class', 'features YlGnBu');
+
+    var tooltip = d3.select("#map")
+      .append("div")
+      .attr("class", "ttip hidden");
+
+    // We define a geographical projection
+    //     https://github.com/mbostock/d3/wiki/Geo-Projections
+    // and set some dummy initial scale.
+    var projection = d3.geo.mercator()
+      .scale(1);
+
+    // We prepare a path object and apply the projection on it.
+    var path = d3.geo.path()
+      .projection(projection);
+
+    // We prepare an object to later have easier access to the data.
+    var dataById = d3.map();
+
+    var template = d3.select('#template').html();
+    Mustache.parse(template);   // optional, speeds up future uses
+
+
+
+    // Define the zoom and attach it to the map
+    var zoom = d3.behavior.zoom()
+          .scaleExtent([1, 10])
+          .on('zoom', doZoom);
+    svg.call(zoom);
+
+
+    // Load the features from the GeoJSON.
+    d3.json('data/ch_municipalities.geojson', function(error, features) {
+      // console.log(features);
+
+      // http://stackoverflow.com/a/17067379/841644
+      // Get the bounding box of the paths (in pixels!) and calculate a
+      // scale factor based on the size of the bounding box and the map
+      // size.
+      var bbox_path = path.bounds(features),
+          scale = 0.95 / Math.max(
+                   (bbox_path[1][0] - bbox_path[0][0]) / width,
+                   (bbox_path[1][1] - bbox_path[0][1]) / height
+               );
+
+      // Get the bounding box of the features (in map units!) and use it
+      // to calculate the center of the features.
+      var bbox_feature = d3.geo.bounds(features),
+          center = [
+            (bbox_feature[1][0]+bbox_feature[0][0])/2,
+            (bbox_feature[1][1]+bbox_feature[0][1])/2]
+          ;
+
+      // Apply the scale, set the center and translate it to fit the
+      // container
+      projection.scale(scale)
+          .center(center)
+          .translate([width/2, height/2]);
+
+      // Read the data for the cartogram
+      d3.csv('data/arealstatistics.csv', function(data) {
+
+        data_global = data;
+
+        // This maps the data of the CSV so it can be easily accessed by
+        // the ID of the municipality, for example: dataById[2196]
+        dataById = d3.nest()
+          .key(function(d) { return d.id; })
+          .rollup(function(d) { return d[0]; })
+          .map(data);
+
+        // // We create a quantize scale to categorize the values in 9 groups.
+        // // The domain is static and has a maximum of 100 (based on the
+        // // assumption that no age group can be larger than 100%).
+        // // The scale returns text values which can be used for the color CSS
+        // // classes (q0-9, q1-9 ... q8-9)
+        // var quantize = d3.scale.quantize()
+        //     .domain([
+        //       d3.min(data, function(d) { return getValueOfData(d); }),
+        //       d3.max(data, function(d) { return getValueOfData(d); })
+        //     ])
+        //     .range(d3.range(9).map(function(i) { return 'q' + i + '-9'; }));
+
+        mapFeatures
+          // D3 specialty: We select the (non-existing) path objects first ...
+          .selectAll('path')
+            // ... and enter the data. For each feature, a <path> element
+            // is added.
+            .data(features.features)
+          .enter().append('path')
+            // .attr('class', function(f) {
+            //   // Use the quantized value for the class
+            //   return quantize(getValueOfData(dataById[getIdOfFeature(f)])); })
+            // As "d" attribute, we set the path of the feature.
+            .attr('d', path)
+            .on('click', showDetails);
+            // .on('mousemove', showTooltip)
+            // .on('mouseout', hideTooltip);
+
+        updateColor();
+          // mapFeatures.selectAll('path')
+          //   .attr('class', function(f) {
+          //     return quantize(getValueOfData(dataById[getIdOfFeature(f)]));
+          //   });
+      });
+
+    });
+
+    function updateColor() {
+      // We create a quantize scale to categorize the values in 9 groups.
+      // The domain is static and has a maximum of 100 (based on the
+      // assumption that no age group can be larger than 100%).
+      // The scale returns text values which can be used for the color CSS
+      // classes (q0-9, q1-9 ... q8-9)
+      var quantize = d3.scale.quantize()
+          .domain([
+            d3.min(data_global, function(d) { return getValueOfData(d); }),
+            d3.max(data_global, function(d) { return getValueOfData(d); })
+          ])
+          .range(d3.range(9).map(function(i) { return 'q' + i + '-9'; }));
+
+      mapFeatures.selectAll('path')
+        .attr('class', function(f) {
+          return quantize(getValueOfData(dataById[getIdOfFeature(f)]));
+        });
+    }
+
+    function showDetails(f) {
+      // Hide the initial content
+      d3.select('#initial').classed("hidden", true);
+      d3.select('#details').classed("hidden", false);
+
+      var id = getIdOfFeature(f);
+      var d = dataById[id];
+
+      var output = Mustache.render(template, d);
+      var container = d3.select('#details');
+      container.html(output);
+    }
+
+    function showTooltip(f, i) {
+      var id = getIdOfFeature(f);
+      var d = dataById[id];
+
+      // Get the current mouse position (as integer)
+      // var mouse = d3.mouse(map.node()).map(function(d) { return parseInt(d); });
+      var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
+
+
+      // Calculate the absolute left and top offsets of the tooltip. If the
+      // mouse is close to the right border of the map, show the tooltip on
+      // the left.
+      // To calculate the offsest, it is necessary to use the current size
+      // of the map in proportion to the original size.
+      // var currentWidth = $('#map').width();
+      // var currentHeight = $('#map').height();
+      // var mouseL = mouse[0] * currentWidth / width;
+      // var mouseT = mouse[1] * currentHeight / height;
+      var left = Math.min(width-12*getNameOfData(d).length, (mouse[0]+30));
+      var top = Math.min(height-40, (mouse[1]+30));
+
+      tooltip.classed('hidden', false)
+          .attr("style", "left:"+left+"px;top:"+top+"px")
+          .html('<strong>' + getNameOfData(d) + '</strong><br>' + getValueOfData(d) + '%');
+    }
+
+    function closeDetails() {
+      d3.select('#details').classed("hidden", true);
+      d3.select('#initial').classed("hidden", false);
+      return false;
+    }
+
+    function hideTooltip() {
+      tooltip.classed("hidden", true);
+    }
+
+    /**
+     * Zoom the features on the map.
+     */
+    function doZoom() {
+
+      // Zoom and keep the stroke width proportional
+      mapFeatures.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")")
+          // 0.25 ==> initial stroke width
+          .style("stroke-width", .25 / d3.event.scale + "px");
+
+      // Hide the tooltip after zooming
+      hideTooltip();
+    }
+
+    /**
+     * Helper function to access the value of a data object.
+     *
+     * Use "+" to convert text values to numbers.
+     */
+    function getValueOfData(d) {
+      return +d[currentKey];
+    }
+
+    function getNameOfData(d) {
+      return d.name;
+    }
+
+    function getIdOfFeature(f) {
+      return f.properties.GMDNR;
+    }
+
+  </script>
 </html>
