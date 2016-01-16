@@ -28,6 +28,12 @@
         font-weight: bold;
         padding: 0.5rem;
         border: 1px solid silver;
+        color: #222;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 0px #a6a6a6;
+        opacity: 0.9;
+        position: absolute;
       }
 
       .hidden {
@@ -149,14 +155,17 @@
               // As "d" attribute, we set the path of the feature.
               .attr('d', path)
               // When the mouse moves over a feature, show the tooltip.
-              .on('mousemove', showTooltip);
+              .on('mousemove', showTooltip)
+              // When the mouse moves out of a feature, hide the tooltip.
+              .on('mouseout', hideTooltip);
 
         });
 
       });
 
       /**
-       * Show a tooltip with the name of the feature.
+       * Show a tooltip with the name of the feature. Calculate the position
+       * of the cursor to show the tooltip next to the mouse.
        *
        * @param {object} f - A GeoJSON Feature object.
        */
@@ -165,9 +174,30 @@
         var id = getIdOfFeature(f);
         // Use the ID to get the data entry.
         var d = dataById[id];
+
+        // Get the current mouse position (as integer)
+        var mouse = d3.mouse(svg.node()).map(
+          function(d) { return parseInt(d); }
+        );
+
+        // Calculate the absolute left and top offsets of the tooltip. If the
+        // mouse is close to the right border of the map, show the tooltip on
+        // the left.
+        var left = Math.min(width - 8 * d.name.length, mouse[0] + 28);
+        var top = mouse[1] + 22;
+
         // Show the tooltip (unhide it) and set the name of the data entry.
+        // Set the position as calculated before.
         tooltip.classed('hidden', false)
+          .attr("style", "left:" + left + "px; top:" + top + "px")
           .html(d.name);
+      }
+
+      /**
+       * Hide the tooltip.
+       */
+      function hideTooltip() {
+        tooltip.classed('hidden', true);
       }
 
       /**
