@@ -3,6 +3,9 @@
   <head>
     <title>Land use statistics map</title>
 
+    <!-- CSS libraries -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet" type="text/css">
+
     <!-- Custom CSS styles -->
     <style type="text/css">
       body {
@@ -40,6 +43,20 @@
         display: none;
       }
 
+      #details {
+        margin-top: 2rem;
+      }
+
+      table {
+        margin-bottom: 0;
+      }
+      td, th {
+        padding: 6px 9px;
+      }
+      td {
+        text-align: right;
+      }
+
       /* Thanks to http://colorbrewer2.org/ */
       .YlGnBu .q0-9{fill:rgb(255,255,217)}
       .YlGnBu .q1-9{fill:rgb(237,248,177)}
@@ -53,15 +70,16 @@
     </style>
   </head>
   <body>
-    <h3>Land use statistics map</h3>
-    <div id="map"><!-- Map container --></div>
-
-    <div id="details" class="hidden"><!-- Details container --></div>
+    <div class="container">
+      <h3 class="row">Land use statistics map</h3>
+      <div id="map" class="row"><!-- Map container --></div>
+      <div id="details" class="row hidden"><!-- Details container --></div>
+    </div>
 
     <!-- Mustache template, rendered later to show the details of a feature -->
     <script id="template" type="x-tmpl-mustache">
-      <h3>{{ name }}</h3>
-      <table>
+      <h3 class="six columns">{{ name }}</h3>
+      <table class="six columns">
         <tr>
           <th>Total area:</th>
           <td>{{ area }} km&sup2;</td>
@@ -183,9 +201,9 @@
               // element is added.
               .data(features.features)
             .enter().append('path')
-              .attr('class', function(d) {
+              .attr('class', function(f) {
                 // Use the quantized value for the class
-                return quantize(dataById[d.properties.GMDNR][currentKey]);
+                return quantize(dataById[getIdOfFeature(f)][currentKey]);
               })
               // As "d" attribute, we set the path of the feature.
               .attr('d', path)
@@ -241,7 +259,7 @@
         // Calculate the absolute left and top offsets of the tooltip. If the
         // mouse is close to the right border of the map, show the tooltip on
         // the left.
-        var left = Math.min(width - 8 * d.name.length, mouse[0] + 28);
+        var left = Math.min(width - 10 * d.name.length, mouse[0] + 10);
         var top = mouse[1] + 22;
 
         // Show the tooltip (unhide it) and set the name of the data entry.
