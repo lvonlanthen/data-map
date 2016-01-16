@@ -56,8 +56,38 @@
     <h3>Land use statistics map</h3>
     <div id="map"><!-- Map container --></div>
 
+    <div id="details" class="hidden"><!-- Details container --></div>
+
+    <!-- Mustache template, rendered later to show the details of a feature -->
+    <script id="template" type="x-tmpl-mustache">
+      <h3>{{ name }}</h3>
+      <table>
+        <tr>
+          <th>Total area:</th>
+          <td>{{ area }} km&sup2;</td>
+        </tr>
+        <tr>
+          <th>Urban area:</th>
+          <td>{{ urban }} %</td>
+        </tr>
+        <tr>
+          <th>Agricultural area:</th>
+          <td>{{ agriculture }} %</td>
+        </tr>
+        <tr>
+          <th>Forest area:</th>
+          <td>{{ forest }} %</td>
+        </tr>
+        <tr>
+          <th>Unproductive area:</th>
+          <td>{{ unproductive }} %</td>
+        </tr>
+      </table>
+    </script>
+
     <!-- JS libraries -->
     <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
 
     <!-- Custom JS code -->
     <script type="text/javascript">
@@ -69,6 +99,11 @@
       // width and height as specified in the CSS above.
       var width = 900,
           height = 600;
+
+      // We get and prepare the Mustache template, parsing it speeds up future
+      // uses
+      var template = d3.select('#template').html();
+      Mustache.parse(template);
 
       // We create a SVG element in the map container and give it some
       // dimensions.
@@ -157,11 +192,34 @@
               // When the mouse moves over a feature, show the tooltip.
               .on('mousemove', showTooltip)
               // When the mouse moves out of a feature, hide the tooltip.
-              .on('mouseout', hideTooltip);
+              .on('mouseout', hideTooltip)
+              // When a feature is clicked, show the details of it.
+              .on('click', showDetails);
 
         });
 
       });
+
+      /**
+       * Show the details of a feature in the details <div> container.
+       * The content is rendered with a Mustache template.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function showDetails(f) {
+        // Get the ID of the feature.
+        var id = getIdOfFeature(f);
+        // Use the ID to get the data entry.
+        var d = dataById[id];
+
+        // Render the Mustache template with the data object and put the
+        // resulting HTML output in the details container.
+        var detailsHtml = Mustache.render(template, d);
+        d3.select('#details').html(detailsHtml);
+
+        // Show (unhide) the details container.
+        d3.select('#details').classed("hidden", false);
+      }
 
       /**
        * Show a tooltip with the name of the feature. Calculate the position
