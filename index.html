@@ -16,6 +16,24 @@
         background: #E6E6E6;
       }
 
+      g.features {
+        stroke: #d8d8d8;
+        stroke-width: 0.5;
+      }
+      g.features path:hover {
+        opacity: 0.5;
+      }
+
+      .tooltip {
+        font-weight: bold;
+        padding: 0.5rem;
+        border: 1px solid silver;
+      }
+
+      .hidden {
+        display: none;
+      }
+
       /* Thanks to http://colorbrewer2.org/ */
       .YlGnBu .q0-9{fill:rgb(255,255,217)}
       .YlGnBu .q1-9{fill:rgb(237,248,177)}
@@ -56,6 +74,11 @@
       // style. We also add a class name for Colorbrewer.
       var mapFeatures = svg.append('g')
           .attr('class', 'features YlGnBu');
+
+      // We add a <div> container for the tooltip, which is hidden by default.
+      var tooltip = d3.select("#map")
+        .append("div")
+        .attr("class", "tooltip hidden");
 
       // Define the zoom and attach it to the map
       var zoom = d3.behavior.zoom()
@@ -124,18 +147,38 @@
                 return quantize(dataById[d.properties.GMDNR][currentKey]);
               })
               // As "d" attribute, we set the path of the feature.
-              .attr('d', path);
+              .attr('d', path)
+              // When the mouse moves over a feature, show the tooltip.
+              .on('mousemove', showTooltip);
 
         });
 
       });
 
       /**
+       * Show a tooltip with the name of the feature.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function showTooltip(f) {
+        // Get the ID of the feature.
+        var id = getIdOfFeature(f);
+        // Use the ID to get the data entry.
+        var d = dataById[id];
+        // Show the tooltip (unhide it) and set the name of the data entry.
+        tooltip.classed('hidden', false)
+          .html(d.name);
+      }
+
+      /**
        * Zoom the features on the map. This rescales the features on the map.
+       * Keep the stroke width proportional when zooming in.
        */
       function doZoom() {
-        // Zoom and keep the stroke width proportional
-        mapFeatures.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+        mapFeatures.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")")
+          // Keep the stroke width proportional. The initial stroke width
+          // (0.5) must match the one set in the CSS.
+          .style("stroke-width", 0.5 / d3.event.scale + "px");
       }
 
       /**
@@ -174,6 +217,16 @@
           'scale': scale,
           'center': center
         };
+      }
+
+      /**
+       * Helper function to retrieve the ID of a feature. The ID is found in
+       * the properties of the feature.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function getIdOfFeature(f) {
+        return f.properties.GMDNR;
       }
 
     </script>
