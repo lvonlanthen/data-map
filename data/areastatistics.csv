@@ -1,4 +1,4 @@
-id,name,total_area,rural,agriculture,forest,unproductive
+id,name,area,urban,agriculture,forest,unproductive
 1,Aeugst am Albis,7.9,12.6,51.3,30.9,5.2
 2,Affoltern am Albis,10.6,30.8,40.1,28.2,0.9
 3,Bonstetten,7.5,15.6,55.4,28.6,0.4
