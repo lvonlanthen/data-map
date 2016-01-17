@@ -63,6 +63,26 @@
         text-align: right;
       }
 
+      #close-details {
+        color: #FA5858;
+        text-decoration: none;
+        font-size: 4rem;
+        text-align: right;
+        line-height: 4.5rem;
+      }
+      #close-details:hover {
+        color: red;
+      }
+
+      #footer {
+        border-top: 1px solid silver;
+        color: #888888;
+        font-size: 1.25rem;
+        text-align: center;
+        margin-top: 1rem;
+        padding: 0.5rem;
+      }
+
       /* Thanks to http://colorbrewer2.org/ */
       .YlGnBu .q0-9{fill:rgb(255,255,217)}
       .YlGnBu .q1-9{fill:rgb(237,248,177)}
@@ -91,16 +111,20 @@
       <div id="initial" class="row">
         <h5>Instructions</h5>
         <ul>
+          <li>Change the key using the dropdown above the map.</li>
           <li>Select a municipality to show the details.</li>
           <li>Scroll in the map to zoom in and out.</li>
         </ul>
+      </div>
+      <div id="footer" class="row">
+        <strong>Data sources</strong>: Data from the Swiss Federal Statistical Office, both the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/dienstleistungen/geostat/datenbeschreibung/generalisierte_gemeindegrenzen.html" target="_blank">geographical data</a> and the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/regionen/02/daten.html" target="_blank">statistical data</a>.
       </div>
     </div>
 
     <!-- Mustache template, rendered later to show the details of a feature -->
     <script id="template" type="x-tmpl-mustache">
       <h3 class="six columns">{{ name }}</h3>
-      <table class="six columns">
+      <table class="five columns">
         <tr>
           <th>Total area:</th>
           <td>{{ area }} km&sup2;</td>
@@ -122,6 +146,7 @@
           <td>{{ unproductive }} %</td>
         </tr>
       </table>
+      <a href="#" id="close-details" class="one column" onclick="hideDetails(); return false;">&#x274c;</a>
     </script>
 
     <!-- JS libraries -->
@@ -291,6 +316,17 @@
 
         // Show (unhide) the details container.
         d3.select('#details').classed("hidden", false);
+      }
+
+      /**
+       * Hide the details <div> container and show the initial content instead.
+       */
+      function hideDetails() {
+        // Hide the details
+        d3.select('#details').classed("hidden", true);
+
+        // Show the initial content
+        d3.select('#initial').classed("hidden", false);
       }
 
       /**
