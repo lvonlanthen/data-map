@@ -3,7 +3,7 @@
   <head>
     <title>Land use statistics map</title>
 
-    <!-- CSS library -->
+    <!-- CSS libraries -->
     <link href="//cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" rel="stylesheet" type="text/css">
 
     <!-- Custom CSS styles -->
@@ -13,42 +13,52 @@
       }
 
       #map {
+        font-size: 0; /* to prevent margin at bottom of map container */
         border: 1px solid silver;
         background: #E6E6E6;
       }
 
-      #content {
-        margin-top: 2rem;
-      }
-
       g.features {
-        stroke: silver;
-        stroke-width: 0.25;
+        stroke: #d8d8d8;
+        stroke-width: 0.5;
       }
-
       g.features path:hover {
         opacity: 0.5;
       }
 
-      #select-key {
-        width: 100%;
+      .tooltip {
+        font-weight: bold;
+        padding: 0.5rem;
+        border: 1px solid silver;
+        color: #222;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px 0px #a6a6a6;
+        opacity: 0.9;
+        position: absolute;
+        font-size: 1.5rem;
       }
 
-      /** A little hack to make the map fill more space than by default on smaller screens **/
+      .hidden {
+        display: none;
+      }
+
+      #details, #initial {
+        margin-top: 2rem;
+      }
+
+      /* Use less margins on smaller screens */
       @media (min-width: 400px) {
         .container {
           width: 100%;
         }
       }
-
       table {
         margin-bottom: 0;
       }
-
       td, th {
         padding: 6px 9px;
       }
-
       td {
         text-align: right;
       }
@@ -64,7 +74,7 @@
         color: red;
       }
 
-      .footer {
+      #footer {
         border-top: 1px solid silver;
         color: #888888;
         font-size: 1.25rem;
@@ -73,90 +83,64 @@
         padding: 0.5rem;
       }
 
-      /** http://colorbrewer2.org/ **/
-      .YlGnBu .q0-9{fill:rgb(255,255,217)} .YlGnBu .q1-9{fill:rgb(237,248,177)} .YlGnBu .q2-9{fill:rgb(199,233,180)} .YlGnBu .q3-9{fill:rgb(127,205,187)} .YlGnBu .q4-9{fill:rgb(65,182,196)} .YlGnBu .q5-9{fill:rgb(29,145,192)} .YlGnBu .q6-9{fill:rgb(34,94,168)} .YlGnBu .q7-9{fill:rgb(37,52,148)} .YlGnBu .q8-9{fill:rgb(8,29,88)}
-
-      div.ttip {
-        padding: 0.5em;
-      }
-
-      div.ttip {
-        color: #222;
-        background: #fff;
-        padding: .5em;
-        text-shadow: #f5f5f5 0 1px 0;
-        border-radius: 2px;
-        box-shadow: 0px 0px 2px 0px #a6a6a6;
-        opacity: 0.9;
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
-
-      .hidden {
-        display: none;
-      }
-
+      /* Thanks to http://colorbrewer2.org/ */
+      .YlGnBu .q0-9{fill:rgb(255,255,217)}
+      .YlGnBu .q1-9{fill:rgb(237,248,177)}
+      .YlGnBu .q2-9{fill:rgb(199,233,180)}
+      .YlGnBu .q3-9{fill:rgb(127,205,187)}
+      .YlGnBu .q4-9{fill:rgb(65,182,196)}
+      .YlGnBu .q5-9{fill:rgb(29,145,192)}
+      .YlGnBu .q6-9{fill:rgb(34,94,168)}
+      .YlGnBu .q7-9{fill:rgb(37,52,148)}
+      .YlGnBu .q8-9{fill:rgb(8,29,88)}
     </style>
   </head>
   <body>
     <div class="container">
       <div class="row">
-        <div class="nine columns">
-          <h3>Land use statistics map</h3>
-        </div>
-        <div class="three columns">
-          <select id="select-key">
-            <option value="rural">Rural area in %</option>
-            <option value="agriculture" selected="selected">Agricultural area in %</option>
-            <option value="forest">Forest area in %</option>
-            <option value="unproductive">Unproductive area in %</option>
-          </select>
-        </div>
+        <h3 class="nine columns">Land use statistics map</h3>
+        <select id="select-key" class="three columns">
+          <option value="urban" selected="selected">Urban area in %</option>
+          <option value="agriculture">Agricultural area in %</option>
+          <option value="forest">Forest area in %</option>
+          <option value="unproductive">Unproductive area in %</option>
+        </select>
       </div>
-      <div class="row">
-        <div id="map" class="twelve column"><!-- Map container --></div>
-      </div>
-      <div id="content">
-        <div id="initial">
-          <div class="row">
-            <div class="six columns">
-              <h5>Instructions</h5>
-              <ul>
-                <li>Change the key using the dropdown above the map.</li>
-                <li>Select a municipality to show the details.</li>
-                <li>Scroll in the map to zoom in and out.</li>
-              </ul>
-            </div>
-            <div class="six columns">
-              <h5>Code</h5>
-              <p>This map was created for the <a href="http://www.webmap.unibe.ch/" target="_blank">webmap workshop</a> being held on January 20-21 2016 at the University of Bern.</p>
-              <p>Check out the <a href="#" target="_blank">tutorial</a> or have a look at the <a href="#" target="_blank">code</a>.</p>
-            </div>
+      <div id="map" class="row"><!-- Map container --></div>
+      <div id="details" class="row hidden"><!-- Details container --></div>
+      <div id="initial">
+        <div class="row">
+          <div class="six columns">
+            <h5>Instructions</h5>
+            <ul>
+              <li>Change the key using the dropdown above the map.</li>
+              <li>Select a municipality to show the details.</li>
+              <li>Scroll in the map to zoom in and out.</li>
+            </ul>
+          </div>
+          <div class="six columns">
+            <h5>Code</h5>
+            <p>This map was created for the <a href="http://www.webmap.unibe.ch/" target="_blank">webmap workshop</a> being held on January 20-21 2016 at the University of Bern.</p>
+            <p>Check out the <a href="/docs/build/html/index.html" target="_blank">tutorial</a> or have a look at the <a href="https://github.com/lvonlanthen/data-map/" target="_blank">code</a>.</p>
           </div>
         </div>
-        <div id="details" class="hidden"></div>
       </div>
-      <div class="footer">
+      <div id="footer" class="row">
         <strong>Data sources</strong>: Data from the Swiss Federal Statistical Office, both the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/dienstleistungen/geostat/datenbeschreibung/generalisierte_gemeindegrenzen.html" target="_blank">geographical data</a> and the <a href="http://www.bfs.admin.ch/bfs/portal/de/index/regionen/02/daten.html" target="_blank">statistical data</a>.
       </div>
     </div>
-  </body>
 
-  <script src="//d3js.org/d3.v3.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
-
-  <script id="template" type="x-tmpl-mustache">
-    <div class="row">
+    <!-- Mustache template, rendered later to show the details of a feature -->
+    <script id="template" type="x-tmpl-mustache">
       <h3 class="six columns">{{ name }}</h3>
       <table class="five columns">
         <tr>
           <th>Total area:</th>
-          <td>{{ total_area }} km&sup2;</td>
+          <td>{{ area }} km&sup2;</td>
         </tr>
         <tr>
-          <th>Rural area:</th>
-          <td>{{ rural }}%</td>
+          <th>Urban area:</th>
+          <td>{{ urban }} %</td>
         </tr>
         <tr>
           <th>Agricultural area:</th>
@@ -171,240 +155,297 @@
           <td>{{ unproductive }} %</td>
         </tr>
       </table>
-      <a href="#" id="close-details" class="one column" onclick="return closeDetails();">&#x274c;</a>
-    </div>
-  </script>
+      <a href="#" id="close-details" class="one column" onclick="hideDetails(); return false;">&#x274c;</a>
+    </script>
 
-  <script type="text/javascript">
+    <!-- JS libraries -->
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
 
-    var mapContainer = d3.select('#map');
-    var width = 900;
-    var height = 600;
+    <!-- Custom JS code -->
+    <script type="text/javascript">
 
-    var data_global;
-    var currentKey = 'agriculture';
+      // We define a variable to later hold the data of the CSV.
+      var mapData;
 
-    d3.select('#select-key').on('change', function(a) {
-      currentKey = d3.select(this).property('value');
-      updateColor();
-    });
+      // We define a variable holding the current key to visualize on the map.
+      var currentKey = 'urban';
 
-    // We create an SVG element in the map container and give it some
-    // dimensions.
-    var svg = d3.select('#map').append('svg').attr("preserveAspectRatio", "xMidYMid")
-      .attr("viewBox", "0 0 " + width + " " + height);
-      // .attr('width', width)
-      // .attr('height', height);
-
-    // We add a <g> element to the SVG element and give it a class to
-        // style it later.
-    var mapFeatures = svg.append('g')
-            .attr('class', 'features YlGnBu');
-
-    var tooltip = d3.select("#map")
-      .append("div")
-      .attr("class", "ttip hidden");
-
-    // We define a geographical projection
-    //     https://github.com/mbostock/d3/wiki/Geo-Projections
-    // and set some dummy initial scale.
-    var projection = d3.geo.mercator()
-      .scale(1);
-
-    // We prepare a path object and apply the projection on it.
-    var path = d3.geo.path()
-      .projection(projection);
-
-    // We prepare an object to later have easier access to the data.
-    var dataById = d3.map();
-
-    var template = d3.select('#template').html();
-    Mustache.parse(template);   // optional, speeds up future uses
-
-
-
-    // Define the zoom and attach it to the map
-    var zoom = d3.behavior.zoom()
-          .scaleExtent([1, 10])
-          .on('zoom', doZoom);
-    svg.call(zoom);
-
-
-    // Load the features from the GeoJSON.
-    d3.json('data/ch_municipalities.geojson', function(error, features) {
-      // console.log(features);
-
-      // http://stackoverflow.com/a/17067379/841644
-      // Get the bounding box of the paths (in pixels!) and calculate a
-      // scale factor based on the size of the bounding box and the map
-      // size.
-      var bbox_path = path.bounds(features),
-          scale = 0.95 / Math.max(
-                   (bbox_path[1][0] - bbox_path[0][0]) / width,
-                   (bbox_path[1][1] - bbox_path[0][1]) / height
-               );
-
-      // Get the bounding box of the features (in map units!) and use it
-      // to calculate the center of the features.
-      var bbox_feature = d3.geo.bounds(features),
-          center = [
-            (bbox_feature[1][0]+bbox_feature[0][0])/2,
-            (bbox_feature[1][1]+bbox_feature[0][1])/2]
-          ;
-
-      // Apply the scale, set the center and translate it to fit the
-      // container
-      projection.scale(scale)
-          .center(center)
-          .translate([width/2, height/2]);
-
-      // Read the data for the cartogram
-      d3.csv('data/arealstatistics.csv', function(data) {
-
-        data_global = data;
-
-        // This maps the data of the CSV so it can be easily accessed by
-        // the ID of the municipality, for example: dataById[2196]
-        dataById = d3.nest()
-          .key(function(d) { return d.id; })
-          .rollup(function(d) { return d[0]; })
-          .map(data);
-
-        // // We create a quantize scale to categorize the values in 9 groups.
-        // // The domain is static and has a maximum of 100 (based on the
-        // // assumption that no age group can be larger than 100%).
-        // // The scale returns text values which can be used for the color CSS
-        // // classes (q0-9, q1-9 ... q8-9)
-        // var quantize = d3.scale.quantize()
-        //     .domain([
-        //       d3.min(data, function(d) { return getValueOfData(d); }),
-        //       d3.max(data, function(d) { return getValueOfData(d); })
-        //     ])
-        //     .range(d3.range(9).map(function(i) { return 'q' + i + '-9'; }));
-
-        mapFeatures
-          // D3 specialty: We select the (non-existing) path objects first ...
-          .selectAll('path')
-            // ... and enter the data. For each feature, a <path> element
-            // is added.
-            .data(features.features)
-          .enter().append('path')
-            // .attr('class', function(f) {
-            //   // Use the quantized value for the class
-            //   return quantize(getValueOfData(dataById[getIdOfFeature(f)])); })
-            // As "d" attribute, we set the path of the feature.
-            .attr('d', path)
-            .on('click', showDetails);
-            // .on('mousemove', showTooltip)
-            // .on('mouseout', hideTooltip);
-
-        updateColor();
-          // mapFeatures.selectAll('path')
-          //   .attr('class', function(f) {
-          //     return quantize(getValueOfData(dataById[getIdOfFeature(f)]));
-          //   });
+      // Listen to changes of the dropdown to select the key to visualize on
+      // the map.
+      d3.select('#select-key').on('change', function(a) {
+        // Change the current key and call the function to update the colors.
+        currentKey = d3.select(this).property('value');
+        updateMapColors();
       });
 
-    });
+      // We specify the dimensions for the map container. We use the same
+      // width and height as specified in the CSS above.
+      var width = 900,
+          height = 600;
 
-    function updateColor() {
-      // We create a quantize scale to categorize the values in 9 groups.
-      // The domain is static and has a maximum of 100 (based on the
-      // assumption that no age group can be larger than 100%).
+      // We get and prepare the Mustache template, parsing it speeds up future
+      // uses
+      var template = d3.select('#template').html();
+      Mustache.parse(template);
+
+      // We create a SVG element in the map container and give it some
+      // dimensions. We can use a viewbox and preserve the aspect ratio. This
+      // also allows a responsive map which rescales and looks good even on
+      // different screen sizes
+      var svg = d3.select('#map').append('svg')
+        .attr("preserveAspectRatio", "xMidYMid")
+        .attr("viewBox", "0 0 " + width + " " + height);
+
+      // We add a <g> element to the SVG element and give it a class to
+      // style. We also add a class name for Colorbrewer.
+      var mapFeatures = svg.append('g')
+          .attr('class', 'features YlGnBu');
+
+      // We add a <div> container for the tooltip, which is hidden by default.
+      var tooltip = d3.select("#map")
+        .append("div")
+        .attr("class", "tooltip hidden");
+
+      // Define the zoom and attach it to the map
+      var zoom = d3.behavior.zoom()
+            .scaleExtent([1, 10])
+            .on('zoom', doZoom);
+      svg.call(zoom);
+
+      // We define a geographical projection
+      //     https://github.com/mbostock/d3/wiki/Geo-Projections
+      // and set some dummy initial scale. The correct scale, center and
+      // translate parameters will be set once the features are loaded.
+      var projection = d3.geo.mercator()
+        .scale(1);
+
+      // We prepare a path object and apply the projection to it.
+      var path = d3.geo.path()
+        .projection(projection);
+
+      // We prepare an object to later have easier access to the data.
+      var dataById = d3.map();
+
+      // We prepare a quantize scale to categorize the values in 9 groups.
       // The scale returns text values which can be used for the color CSS
-      // classes (q0-9, q1-9 ... q8-9)
+      // classes (q0-9, q1-9 ... q8-9). The domain will be defined once the
+      // values are known.
       var quantize = d3.scale.quantize()
-          .domain([
-            d3.min(data_global, function(d) { return getValueOfData(d); }),
-            d3.max(data_global, function(d) { return getValueOfData(d); })
-          ])
-          .range(d3.range(9).map(function(i) { return 'q' + i + '-9'; }));
+        .range(d3.range(9).map(function(i) { return 'q' + i + '-9'; }));
 
-      mapFeatures.selectAll('path')
-        .attr('class', function(f) {
-          return quantize(getValueOfData(dataById[getIdOfFeature(f)]));
+      // Load the features from the GeoJSON.
+      d3.json('data/ch_municipalities.geojson', function(error, features) {
+
+        // Get the scale and center parameters from the features.
+        var scaleCenter = calculateScaleCenter(features);
+
+        // Apply scale, center and translate parameters.
+        projection.scale(scaleCenter.scale)
+          .center(scaleCenter.center)
+          .translate([width/2, height/2]);
+
+        // Read the data for the cartogram
+        d3.csv('data/areastatistics.csv', function(data) {
+
+          // We store the data object in the variable which is accessible from
+          // outside of this function.
+          mapData = data;
+
+          // This maps the data of the CSV so it can be easily accessed by
+          // the ID of the municipality, for example: dataById[2196]
+          dataById = d3.nest()
+            .key(function(d) { return d.id; })
+            .rollup(function(d) { return d[0]; })
+            .map(data);
+
+          // We add the features to the <g> element created before.
+          // D3 wants us to select the (non-existing) path objects first ...
+          mapFeatures.selectAll('path')
+              // ... and then enter the data. For each feature, a <path>
+              // element is added.
+              .data(features.features)
+            .enter().append('path')
+              // As "d" attribute, we set the path of the feature.
+              .attr('d', path)
+              // When the mouse moves over a feature, show the tooltip.
+              .on('mousemove', showTooltip)
+              // When the mouse moves out of a feature, hide the tooltip.
+              .on('mouseout', hideTooltip)
+              // When a feature is clicked, show the details of it.
+              .on('click', showDetails);
+
+          // Call the function to update the map colors.
+          updateMapColors();
+
         });
-    }
 
-    function showDetails(f) {
-      // Hide the initial content
-      d3.select('#initial').classed("hidden", true);
-      d3.select('#details').classed("hidden", false);
+      });
 
-      var id = getIdOfFeature(f);
-      var d = dataById[id];
+      /**
+       * Update the colors of the features on the map. Each feature is given a
+       * CSS class based on its value.
+       */
+      function updateMapColors() {
 
-      var output = Mustache.render(template, d);
-      var container = d3.select('#details');
-      container.html(output);
-    }
+        // Set the domain of the values (the minimum and maximum values of
+        // all values of the current key) to the quantize scale.
+        quantize.domain([
+          d3.min(mapData, function(d) { return getValueOfData(d); }),
+          d3.max(mapData, function(d) { return getValueOfData(d); })
+        ]);
 
-    function showTooltip(f, i) {
-      var id = getIdOfFeature(f);
-      var d = dataById[id];
+        // Update the class (determining the color) of the features.
+        mapFeatures.selectAll('path')
+          .attr('class', function(f) {
+            // Use the quantized value for the class
+            return quantize(getValueOfData(dataById[getIdOfFeature(f)]));
+          });
+      }
 
-      // Get the current mouse position (as integer)
-      // var mouse = d3.mouse(map.node()).map(function(d) { return parseInt(d); });
-      var mouse = d3.mouse(svg.node()).map( function(d) { return parseInt(d); } );
+      /**
+       * Show the details of a feature in the details <div> container.
+       * The content is rendered with a Mustache template.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function showDetails(f) {
+        // Get the ID of the feature.
+        var id = getIdOfFeature(f);
+        // Use the ID to get the data entry.
+        var d = dataById[id];
 
+        // Render the Mustache template with the data object and put the
+        // resulting HTML output in the details container.
+        var detailsHtml = Mustache.render(template, d);
+        d3.select('#details').html(detailsHtml);
 
-      // Calculate the absolute left and top offsets of the tooltip. If the
-      // mouse is close to the right border of the map, show the tooltip on
-      // the left.
-      // To calculate the offsest, it is necessary to use the current size
-      // of the map in proportion to the original size.
-      // var currentWidth = $('#map').width();
-      // var currentHeight = $('#map').height();
-      // var mouseL = mouse[0] * currentWidth / width;
-      // var mouseT = mouse[1] * currentHeight / height;
-      var left = Math.min(width-12*getNameOfData(d).length, (mouse[0]+30));
-      var top = Math.min(height-40, (mouse[1]+30));
+        // Hide the initial container.
+        d3.select('#initial').classed("hidden", true);
 
-      tooltip.classed('hidden', false)
-          .attr("style", "left:"+left+"px;top:"+top+"px")
-          .html('<strong>' + getNameOfData(d) + '</strong><br>' + getValueOfData(d) + '%');
-    }
+        // Show (unhide) the details container.
+        d3.select('#details').classed("hidden", false);
+      }
 
-    function closeDetails() {
-      d3.select('#details').classed("hidden", true);
-      d3.select('#initial').classed("hidden", false);
-      return false;
-    }
+      /**
+       * Hide the details <div> container and show the initial content instead.
+       */
+      function hideDetails() {
+        // Hide the details
+        d3.select('#details').classed("hidden", true);
 
-    function hideTooltip() {
-      tooltip.classed("hidden", true);
-    }
+        // Show the initial content
+        d3.select('#initial').classed("hidden", false);
+      }
 
-    /**
-     * Zoom the features on the map.
-     */
-    function doZoom() {
+      /**
+       * Show a tooltip with the name of the feature. Calculate the position
+       * of the cursor to show the tooltip next to the mouse.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function showTooltip(f) {
+        // Get the ID of the feature.
+        var id = getIdOfFeature(f);
+        // Use the ID to get the data entry.
+        var d = dataById[id];
 
-      // Zoom and keep the stroke width proportional
-      mapFeatures.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")")
-          // 0.25 ==> initial stroke width
-          .style("stroke-width", .25 / d3.event.scale + "px");
+        // Get the current mouse position (as integer)
+        var mouse = d3.mouse(d3.select('#map').node()).map(
+          function(d) { return parseInt(d); }
+        );
 
-      // Hide the tooltip after zooming
-      hideTooltip();
-    }
+        // Calculate the absolute left and top offsets of the tooltip. If the
+        // mouse is close to the right border of the map, show the tooltip on
+        // the left.
+        var left = Math.min(width - 4 * d.name.length, mouse[0] + 5);
+        var top = mouse[1] + 25;
 
-    /**
-     * Helper function to access the value of a data object.
-     *
-     * Use "+" to convert text values to numbers.
-     */
-    function getValueOfData(d) {
-      return +d[currentKey];
-    }
+        // Show the tooltip (unhide it) and set the name of the data entry.
+        // Set the position as calculated before.
+        tooltip.classed('hidden', false)
+          .attr("style", "left:" + left + "px; top:" + top + "px")
+          .html(d.name);
+      }
 
-    function getNameOfData(d) {
-      return d.name;
-    }
+      /**
+       * Hide the tooltip.
+       */
+      function hideTooltip() {
+        tooltip.classed('hidden', true);
+      }
 
-    function getIdOfFeature(f) {
-      return f.properties.GMDNR;
-    }
+      /**
+       * Zoom the features on the map. This rescales the features on the map.
+       * Keep the stroke width proportional when zooming in.
+       */
+      function doZoom() {
+        mapFeatures.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")")
+          // Keep the stroke width proportional. The initial stroke width
+          // (0.5) must match the one set in the CSS.
+          .style("stroke-width", 0.5 / d3.event.scale + "px");
+      }
 
-  </script>
+      /**
+       * Calculate the scale factor ant the center coordinates of a GeoJSON
+       * FeatureCollection. For the calculation, the height and width of the
+       * map container is needed.
+       *
+       * Thanks to: http://stackoverflow.com/a/17067379/841644
+       *
+       * @param {object} features - A GeoJSON FeatureCollection object
+       *   containing a list of features.
+       *
+       * @return {object} An object containing the following attributes:
+       *   - scale: The calculated scale factor.
+       *   - center: A list of two coordinates marking the center.
+       */
+      function calculateScaleCenter(features) {
+        // Get the bounding box of the paths (in pixels!) and calculate a
+        // scale factor based on the size of the bounding box and the map
+        // size.
+        var bbox_path = path.bounds(features),
+            scale = 0.95 / Math.max(
+                     (bbox_path[1][0] - bbox_path[0][0]) / width,
+                     (bbox_path[1][1] - bbox_path[0][1]) / height
+                 );
+
+        // Get the bounding box of the features (in map units!) and use it
+        // to calculate the center of the features.
+        var bbox_feature = d3.geo.bounds(features),
+            center = [
+              (bbox_feature[1][0]+bbox_feature[0][0])/2,
+              (bbox_feature[1][1]+bbox_feature[0][1])/2]
+            ;
+
+        return {
+          'scale': scale,
+          'center': center
+        };
+      }
+
+      /**
+       * Helper function to access the (current) value of a data object.
+       *
+       * Use "+" to convert text values to numbers.
+       *
+       * @param {object} d - A data object representing an entry (one line) of
+       * the data CSV.
+       */
+      function getValueOfData(d) {
+        return +d[currentKey];
+      }
+
+      /**
+       * Helper function to retrieve the ID of a feature. The ID is found in
+       * the properties of the feature.
+       *
+       * @param {object} f - A GeoJSON Feature object.
+       */
+      function getIdOfFeature(f) {
+        return f.properties.GMDNR;
+      }
+
+    </script>
+  </body>
 </html>
