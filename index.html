@@ -134,7 +134,6 @@
        * Zoom the features on the map. This rescales the features on the map.
        */
       function doZoom() {
-        // Zoom and keep the stroke width proportional
         mapFeatures.attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
       }
 
