@@ -97,9 +97,9 @@
           // Set the domain of the values (the minimum and maximum values of
           // all values of the current key) to the quantize scale.
           quantize.domain([
-              d3.min(data, function(d) { return d[currentKey]; }),
-              d3.max(data, function(d) { return d[currentKey]; })
-            ]);
+            d3.min(data, function(d) { return getValueOfData(d); }),
+            d3.max(data, function(d) { return getValueOfData(d); })
+          ]);
 
           // We add a <g> element to the SVG element and give it a class to
           // style it later. We also add a class name for Colorbrewer.
@@ -113,7 +113,7 @@
             .enter().append('path')
               .attr('class', function(d) {
                 // Use the quantized value for the class
-                return quantize(dataById[d.properties.GMDNR][currentKey]);
+                return quantize(getValueOfData(dataById[d.properties.GMDNR]));
               })
               // As "d" attribute, we set the path of the feature.
               .attr('d', path);
@@ -158,6 +158,18 @@
           'scale': scale,
           'center': center
         };
+      }
+
+      /**
+       * Helper function to access the (current) value of a data object.
+       *
+       * Use "+" to convert text values to numbers.
+       *
+       * @param {object} d - A data object representing an entry (one line) of
+       * the data CSV.
+       */
+      function getValueOfData(d) {
+        return +d[currentKey];
       }
 
     </script>
